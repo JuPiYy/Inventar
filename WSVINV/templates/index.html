@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Inventar</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+</head>
+<body>
+
+    <div class="container mt-5">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+
+            <h1 class="mb-0">Inventar</h1>
+
+            <div class="d-flex flex-wrap gap-2">
+                <a href="/equipment/add" class="btn btn-primary d-flex align-items-center">
+                    <i class="bi bi-plus-lg me-2"></i> Hinzufügen
+                </a>
+
+                <a href="{{ url_for('export_excel') }}" class="btn btn-success d-flex align-items-center">
+                    <i class="bi bi-file-earmark-excel me-2"></i> Export
+                </a>
+
+                <a href="/admin" class="btn btn-danger d-flex align-items-center">
+                    <i class="bi bi-hammer me-2"></i> Admin
+                </a>
+            </div>
+        </div>
+
+        <div class="card shadow-sm mb-4">
+            <div class="card-body">
+                <form method="GET" action="{{ url_for('index') }}" class="row g-3 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold">Suche</label>
+                        <input type="text" name="search" class="form-control" placeholder="Name oder Tag..." value="{{ request.args.get('search', '') }}">
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold">Kategorie</label>
+                        <select name="category" class="form-select">
+                            <option value="">Alle Kategorien</option>
+                            {% for cat in categories %}
+                            <option value="{{ cat.id }}" {% if request.args.get('category')|int==cat.id %}selected{% endif %}>{{ cat.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold">Status</label>
+                        <select name="status" class="form-select">
+                            <option value="">Alle Stati</option>
+                            {% for s in statuses %}
+                            <option value="{{ s.id }}" {% if request.args.get('status')|int==s.id %}selected{% endif %}>{{ s.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-3 d-flex gap-2">
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-filter"></i> Filtern
+                        </button>
+                        <a href="{{ url_for('index') }}" class="btn btn-outline-secondary w-100">
+                            Reset
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="table-responsive" style="overflow-x: auto;">
+            <table class="table table-striped table-hover border">
+                <thead class="table-light">
+                    <tr>
+                        <th>Asset Tag</th>
+                        <th>Modellname</th>
+                        <th>Kategorie</th>
+                        <th>Status</th>
+                        <th>Aktionen</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% set current_category = [None] %}
+                    {% for item in inventory %}
+
+                    {# Wenn die Kategorie gewechselt hat, zeige eine Trennzeile an #}
+                    {% if item.category.name != current_category[0] %}
+                    {# Update der aktuellen Kategorie #}
+                    {% if current_category.append(item.category.name) %}{% endif %}
+                    {% if current_category.pop(0) %}{% endif %}
+                    {% endif %}
+                    <tr>
+                        <td>{{ item.AssetTag }}</td>
+                        <td>
+                            {{ item.ModelName }}
+                            {% if item.specs_dict and item.specs_dict.get('Name') %}
+                             {{ item.specs_dict.get('Name') }} 
+                            {% endif %}
+                            {# Wenn die Menge größer als 1 ist, zeigen wir ein kleines dezentes Badge an #}
+                            {% if item.Quantity and item.Quantity > 1 %}
+                            <span class="badge rounded-pill bg-light text-dark border ms-1" style="font-size: 0.75rem;">
+                                x{{ item.Quantity }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>{{ item.category.name if item.category else 'Keine' }}</td>
+                        <td>
+                            {# Hier nutzen wir auch direkt unsere neue color_class Property! #}
+                            <span class="badge bg-{{ item.status.color_class if item.status else 'secondary' }}">
+                                {{ item.status.name if item.status else 'Unbekannt' }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <a href="{{ url_for('details', item_id=item.EquipmentID) }}" class="btn btn-sm btn-info text-white">
+                                    <i class="bi bi-eye"></i> Details
+                                </a>
+
+                                <form action="{{ url_for('delete_item', item_id=item.EquipmentID) }}"
+                                      method="POST"
+                                      style="display:inline;"
+                                      onsubmit="return confirm('Möchtest du diesen Gegenstand wirklich unwiderruflich löschen? Alle Wartungsprotokolle gehen dabei verloren!');">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" class="text-center text-muted">Keine Daten in der Datenbank gefunden.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</body>
+</html>

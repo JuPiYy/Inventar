@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="utf-8">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <title>Administration - Standorte & Stammdaten</title>
+    
+</head>
+<body class="bg-light">
+    <div class="container-fluid mt-5 px-4">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1><i class="bi bi-gear-fill me-2"></i>Administration</h1>
+            <a href="/" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> Zurück</a>
+        </div>
+
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-dark text-white">Kategorien</div>
+                    <div class="card-body">
+                        <form method="POST" class="d-flex mb-3">
+                            <input type="hidden" name="target" value="category">
+                            <input type="text" name="name" class="form-control form-control-sm me-2" placeholder="Neu..." required>
+                            <button class="btn btn-sm btn-success"><i class="bi bi-plus"></i></button>
+                        </form>
+                        <ul class="list-group list-group-flush small">
+                            {% for c in categories %}
+                            <li class="list-group-item d-flex justify-content-between">{{ c.name }} <span class="badge bg-light text-dark">ID: {{ c.id }}</span></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-dark text-white">Status</div>
+                    <div class="card-body">
+                        <form method="POST" class="d-flex mb-3">
+                            <input type="hidden" name="target" value="status">
+                            <input type="text" name="name" class="form-control form-control-sm me-2" placeholder="Neu..." required>
+                            <button class="btn btn-sm btn-success"><i class="bi bi-plus"></i></button>
+                        </form>
+                        <ul class="list-group list-group-flush small">
+                            {% for s in statuses %}
+                            <li class="list-group-item d-flex justify-content-between">{{ s.name }} <span class="badge bg-light text-dark">ID: {{ s.id }}</span></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card shadow-sm mb-4 border-primary">
+                    <div class="card-header bg-primary text-white">Standorte</div>
+                    <div class="card-body">
+                        <form method="POST" class="d-flex mb-3">
+                            <input type="hidden" name="target" value="location">
+                            <input type="text" name="name" class="form-control form-control-sm me-2" placeholder="Bootshaus..." required>
+                            <button class="btn btn-sm btn-primary"><i class="bi bi-plus"></i></button>
+                        </form>
+                        <ul class="list-group list-group-flush small">
+                            {% for l in locations %}
+                            <li class="list-group-item d-flex justify-content-between">{{ l.name }} <span class="badge bg-light text-dark">ID: {{ l.id }}</span></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-dark text-white">Wartungstypen</div>
+                    <div class="card-body">
+                        <form method="POST" class="d-flex mb-3">
+                            <input type="hidden" name="target" value="maint_type">
+                            <input type="text" name="name" class="form-control form-control-sm me-2" placeholder="Neu..." required>
+                            <button class="btn btn-sm btn-success"><i class="bi bi-plus"></i></button>
+                        </form>
+                        <ul class="list-group list-group-flush small">
+                            {% for m in maint_types %}
+                            <li class="list-group-item d-flex justify-content-between">{{ m.name }} <span class="badge bg-light text-dark">ID: {{ m.id }}</span></li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

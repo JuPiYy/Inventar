@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <title>{{ item.ModelName }} - Details</title>
+   
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <a href="/" class="btn btn-outline-secondary mb-4">← Zurück zur Übersicht</a>
+
+        <div class="row">
+            <div class="col-md-6">
+                {% if item.ImageFile %}
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body text-center p-2">
+                        <img src="{{ url_for('static', filename='uploads/' + item.ImageFile) }}"
+                             class="img-fluid rounded"
+                             alt="Bild von {{ item.ModelName }}"
+                             style="max-height: 400px; width: auto;">
+                    </div>
+                </div>
+                {% else %}
+                <div class="card shadow-sm mb-4 border-dashed">
+                    <div class="card-body text-center p-5 text-muted">
+                        <i class="bi bi-camera-fill d-block mb-2" style="font-size: 2rem;"></i>
+                        <p class="small mb-0">Kein Foto für diesen Gegenstand hinterlegt.</p>
+                    </div>
+                </div>
+                {% endif %}
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Stammdaten & Spezifikationen</h5>
+                        <button class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#editItemModal">
+                            <i class="bi bi-pencil"></i> Bearbeiten
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <table class="table table-sm">
+                            <tr><th>Asset Tag:</th><td>{{ item.AssetTag }}</td></tr>
+                            <tr><th>Modell:</th><td>{{ item.ModelName }}</td></tr>
+                            <tr>
+                                <th>Anzahl:</th>
+                                <td>{{ item.Quantity if item.Quantity else 1 }} Stück</td>
+                            </tr>
+                            <tr><th>Kategorie:</th><td>{{ item.category.name }}</td></tr>
+                            <tr>
+                                <th>Status:</th>
+                                <td>
+                                    <span class="badge bg-{{ item.status.color_class }}">
+                                        {{ item.status.name }}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Standort:</th>
+                                <td>
+                                    <span class="text-primary">
+                                        <i class="bi bi-geo-alt-fill"></i> {{ item.location.name if item.location else 'Kein Standort zugewiesen' }}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Händler / Lieferant:</th>
+                                <td>{{ item.Vendor if item.Vendor else 'Nicht angegeben' }}</td>
+                            </tr>
+                            <tr><th>Kaufdatum:</th><td>{{ item.PurchaseDate or '---' }}</td></tr>
+                            <tr>
+                                <th>Kaufpreis:</th>
+                                <td>{{ "%.2f"|format(item.PurchasePrice) if item.PurchasePrice else '---' }} €</td>
+                            </tr>
+                            <tr>
+                                <th>Aktueller Wert:</th>
+                                <td>{{ "%.2f"|format(item.CurrentValue) if item.CurrentValue else '---' }} €</td>
+                            </tr>
+                            {% if warranty %}
+                            <tr>
+                                <th>Garantie-Status:</th>
+                                <td>
+                                    {% if warranty.is_active %}
+                                    <span class="badge bg-success">Aktiv (noch {{ warranty.remaining_months }} Monate)</span>
+                                    {% else %}
+                                    <span class="badge bg-danger">Abgelaufen</span>
+                                    {% endif %}
+                                    <small class="text-muted d-block">Endet am: {{ warranty.end_date.strftime('%d.%m.%Y') }}</small>
+                                </td>
+                            </tr>
+                            {% endif %}
+
+                        </table>
+
+                        <h6 class="mt-4 border-bottom pb-2">Extra-Informationen</h6>
+                        <table class="table table-bordered table-striped mt-2">
+                            <thead class="table-light">
+                                <tr><th>Eigenschaft</th><th>Wert</th></tr>
+                            </thead>
+                            <tbody>
+                                {% for key, value in specs.items() %}
+                                <tr>
+                                    <td class="fw-bold">{{ key }}</td>
+                                    <td>{{ value }}</td>
+                                </tr>
+                                {% else %}
+                                <tr><td colspan="2" class="text-muted small">Keine Details vorhanden.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="card bg-light mb-4">
+                    <div class="card-header fw-bold">Interne Bemerkungen</div>
+                    <div class="card-body">
+                        <p class="card-text">{{ item.Notes if item.Notes else 'Keine Bemerkungen hinterlegt.' }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-dark text-white d-flex justify-content-between">
+                        <h5 class="mb-0">Historie</h5>
+                        <button class="btn btn-sm btn-success" data-bs-toggle="modal" data-bs-target="#addLogModal">
+                            <i class="bi bi-plus-lg"></i> Neuer Eintrag
+                        </button>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        {% for log in logs %}
+                        <div class="list-group-item">
+                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                <span class="badge rounded-pill bg-secondary shadow-sm">
+                                    <i class="bi bi-tag-fill me-1"></i> {{ log.maintenance_type.name }}
+                                </span>
+                                <small class="text-muted">{{ log.LogDate.strftime('%d.%m.%Y') }}</small>
+                            </div>
+
+                            <div class="mt-1">
+                                {# 1. Den eigentlichen Text anzeigen (alles vor der ersten eckigen Klammer) #}
+                                {{ log.Description.split('[')[0] }}
+
+                                <div class="mt-2 d-flex flex-wrap gap-2">
+                                    {# 2. Badge für Standortänderung #}
+                                    {% if "[Standort geändert:" in log.Description %}
+                                    {% set s_parts = log.Description.split('[Standort geändert:') %}
+                                    {# Wir nehmen den Teil zwischen [ und ] #}
+                                    {% set s_content = s_parts[1].split(']')[0] %}
+                                    <div class="mt-1">
+                                        <span class="badge bg-warning text-dark border border-dark-subtle">
+                                            <i class="bi bi-geo-alt"></i>
+                                            {{ s_content.replace('>>>', '<i class="bi bi-chevron-right"></i>') | safe }}
+                                        </span>
+                                    </div>
+                                    {% endif %}
+
+                                    {# 3. Badge für Statusänderung #}
+                                    {% if "[Status geändert:" in log.Description %}
+                                    {% set st_parts = log.Description.split('[Status geändert:') %}
+                                    {# Wir nehmen den Teil zwischen [ und ] #}
+                                    {% set st_content = st_parts[1].split(']')[0] %}
+                                    <div class="mt-1">
+                                        <span class="badge bg-info text-dark border border-dark-subtle">
+                                            <i class="bi bi-activity"></i>
+                                            {{ st_content.replace('>>>', '<i class="bi bi-chevron-right"></i>') | safe }}
+                                        </span>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="d-flex justify-content-between align-items-center mt-2">
+                                {% if log.Costs %}
+                                <span class="badge bg-light text-success border border-success">
+                                    <i class="bi bi-cash-stack me-1"></i> {{ "%.2f"|format(log.Costs) }} €
+                                </span>
+                                {% else %}
+                                <span class="text-muted small"><em>Keine Kosten</em></span>
+                                {% endif %}
+
+                                <small class="text-muted">Durchgeführt von: <strong>{{ log.PerformedBy }}</strong></small>
+                            </div>
+                        </div>
+                        {% else %}
+                        <div class="list-group-item text-center py-4 text-muted">
+                            <i class="bi bi-info-circle me-2"></i> Noch keine Einträge vorhanden.
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal fade" id="addLogModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <form action="{{ url_for('add_log', item_id=item.EquipmentID) }}" method="POST" class="modal-content">
+                        <div class="modal-header bg-success text-white">
+                            <h5 class="modal-title">Ereignis protokollieren</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label">Datum *</label>
+                                <input type="date" name="LogDate" class="form-control" value="{{ today_date }}" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Ereignistyp *</label>
+                                <select name="TypeID" class="form-control" required>
+                                    <option value="" disabled selected>Bitte wählen...</option>
+                                    {% for t in maint_types %}
+                                    <option value="{{ t.id }}">{{ t.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Beschreibung *</label>
+                                <textarea name="Description" class="form-control" rows="3" placeholder="Was wurde genau gemacht?" required></textarea>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Kosten (€)</label>
+                                    <input type="number" name="Costs" class="form-control" step="0.01" placeholder="0.00" min="0">
+                                </div>
+
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Durchgeführt von *</label>
+                                    <input type="text" name="PerformedBy" class="form-control" placeholder="Dein Name" required>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Standort aktualisieren? (Optional)</label>
+                                <select name="NewLocationID" class="form-control">
+                                    <option value="" selected>--- Keine Änderung ---</option>
+                                    {% for loc in locations %}
+                                    <option value="{{ loc.id }}">{{ loc.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Wähle einen Standort, um den aktuellen Platz des Bootes zu ändern.</small>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Status aktualisieren? (Optional)</label>
+                                <select name="NewStatusID" class="form-control">
+                                    <option value="" selected>--- Keine Änderung ---</option>
+                                    {% for s in statuses %}
+                                    <option value="{{ s.id }}">{{ s.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted">Wähle einen Status, um den Zustand des Gegenstands zu ändern.</small>
+                            </div>
+
+                            <small class="text-muted">* Pflichtfelder</small>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                            <button type="submit" class="btn btn-success">Eintrag speichern</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="modal fade" id="editItemModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <form action="{{ url_for('edit_item', item_id=item.EquipmentID) }}" method="POST" class="modal-content">
+                        <div class="modal-header bg-primary text-white">
+                            <h5 class="modal-title">Gegenstand bearbeiten</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Asset Tag</label>
+                                    <input type="text" name="AssetTag" class="form-control" value="{{ item.AssetTag }}" required>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Modellname</label>
+                                    <input type="text" name="ModelName" class="form-control" value="{{ item.ModelName }}" required>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Kategorie</label>
+                                    <select name="CategoryID" class="form-control">
+                                        {% for cat in categories %}
+                                        <option value="{{ cat.id }}" {% if cat.id==item.CategoryID %}selected{% endif %}>{{ cat.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Status</label>
+                                    <select name="StatusID" class="form-control">
+                                        {% for s in statuses %}
+                                        <option value="{{ s.id }}" {% if s.id==item.StatusID %}selected{% endif %}>
+                                            {{ s.name }}
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Standort</label>
+                                    <select name="LocationID" class="form-control">
+                                        {% for loc in locations %}
+                                        <option value="{{ loc.id }}" {% if loc.id==item.LocationID %}selected{% endif %}>{{ loc.name }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Kaufdatum</label>
+                                    <input type="date" name="PurchaseDate" class="form-control"
+                                           value="{{ item.PurchaseDate.strftime('%Y-%m-%d') if item.PurchaseDate else '' }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Kaufpreis (€)</label>
+                                    <input type="number" name="PurchasePrice" class="form-control" step="0.01" value="{{ item.PurchasePrice or 0.00 }}">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Aktueller Wert (€)</label>
+                                    <input type="number" name="CurrentValue" class="form-control" step="0.01" value="{{ item.CurrentValue or 0.00 }}">
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label">Garantie (Monate)</label>
+                                    <input type="number" name="WarrantyMonths" class="form-control" value="{{ item.WarrantyMonths or 0 }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Anzahl / Bestand</label>
+                                    <input type="number" name="Quantity" class="form-control"
+                                           value="{{ item.Quantity if item.Quantity else 1 }}" min="1">
+                                    <small class="text-muted">Anzahl der Gegenstände unter diesem Asset Tag.</small>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Händler</label>
+                                    <input type="text" name="Vendor" class="form-control" value="{{ item.Vendor }}">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Bemerkungen</label>
+                                    <textarea name="Notes" class="form-control" rows="3">{{ item.Notes if item else '' }}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
+                            <button type="submit" class="btn btn-success">Änderungen speichern</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
