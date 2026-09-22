@@ -3,6 +3,7 @@ Handling connections from and to the database
 """
 
 from flask_sqlalchemy import SQLAlchemy
+
 import json
 
 db = SQLAlchemy()
