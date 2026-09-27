@@ -1,7 +1,7 @@
 import dotenv
 import os
 
-dotenv.load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
+dotenv.load_dotenv(os.path.join('.env'))
 
 class Settings():
     class Server:
