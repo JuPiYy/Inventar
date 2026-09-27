@@ -14,6 +14,8 @@ class Settings():
         def __init__(self):
             self.host = os.getenv("DATABASE_HOST", "localhost")
             self.name = os.getenv("DATABASE_NAME", "Inventar")
+            self.username = os.getenv("DATABASE_USERNAME", "sa")
+            self.password = os.getenv("DATABASE_PASSWORD", "Password123!")
             self.trusted_connection = os.getenv("DATABASE_TRUSTED_CONNECTION") if os.getenv("DATABASE_TRUSTED_CONNECTION") is not None else "yes"
             self.trustservercertificate = os.getenv("DATABASE_TRUSTSERVERCERTIFICATE") if os.getenv("DATABASE_TRUSTSERVERCERTIFICATE") is not None else "yes"
             self.track_modifications = bool(os.getenv("SQLALCHEMY_TRACK_MODIFICATIONS"))

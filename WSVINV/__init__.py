@@ -29,8 +29,13 @@ app = Flask(__name__)
 
 # 2. Flask-SQLAlchemy Konfiguration
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = settings.database.track_modifications
-app.config['SQLALCHEMY_DATABASE_URI'] = f"mssql+pyodbc://{settings.database.host}/{settings.database.name}?driver=ODBC+Driver+18+for+SQL+Server&trusted_connection={settings.database.trusted_connection}&TrustServerCertificate={settings.database.trustservercertificate}"
 
+if settings.database.trusted_connection.lower() == "yes":
+    app.config['SQLALCHEMY_DATABASE_URI'] = f"mssql+pyodbc://{settings.database.host}/{settings.database.name}?driver=ODBC+Driver+18+for+SQL+Server&trusted_connection=yes&TrustServerCertificate={settings.database.trustservercertificate}"
+    app.logger.info(f"Es besteht eine vertrauenswürdige Verbindung, weswegen die Benutzerdatenkonfiguration ignoriert wurde")
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = f"mssql+pyodbc://{settings.database.username}:{settings.database.password}@{settings.database.host}/{settings.database.name}?driver=ODBC+Driver+18+for+SQL+Server&TrustServerCertificate={settings.database.trustservercertificate}"
+    app.logger.info(f"Es besteht keine vertrauenswürdige Verbindung.  Die angegebenen Benutzerdaten werden verwendet.")
 
 app.logger.info(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
 
