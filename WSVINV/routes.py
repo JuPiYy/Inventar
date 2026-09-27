@@ -2,6 +2,8 @@
 Handles webpage management.  Contains all available endpoints/sites
 """
 
+from WSVINV.config import settings
+
 from WSVINV.database import Category, Status, MaintenanceTypes, Equipment, MaintenanceLog, Location
 from WSVINV.database import db
 
@@ -61,7 +63,8 @@ def register_routes(app):
         return render_template('index.html', 
                                inventory=inventory, 
                                categories=categories, 
-                               statuses=statuses)
+                               statuses=statuses,
+                               settings=settings.app)
 
     @app.route('/equipment/<int:item_id>')
     def details(item_id):
@@ -112,7 +115,9 @@ def register_routes(app):
                                today_date=today_date,   # Wichtig fürs Modal
                                categories=all_categories,  # Hier mitschicken!
                                statuses=all_statuses,      # Hier mitschicken!
-                               locations=all_locations)
+                               locations=all_locations,
+                               settings=settings.app
+                               )
 
     @app.route('/equipment/add', methods=['GET', 'POST'])
     def add_equipment():
@@ -185,7 +190,8 @@ def register_routes(app):
             'add_equipment.html', 
             categories=categories, 
             statuses=statuses, 
-            locations=locations
+            locations=locations,
+            settings=settings.app
         )
 
 
@@ -215,7 +221,8 @@ def register_routes(app):
                                categories=Category.query.all(), 
                                statuses=Status.query.all(),
                                locations=Location.query.all(), # NEU: Standorte laden
-                               maint_types=MaintenanceTypes.query.all())
+                               maint_types=MaintenanceTypes.query.all(),
+                               settings=settings.app)
 
     @app.route('/equipment/<int:item_id>/add_log', methods=['POST'])
     def add_log(item_id):

@@ -83,25 +83,45 @@
 
                     <div class="mb-3">
                         <label for="image" class="form-label">Gegenstand-Foto</label>
+                        {% if settings.upload_enabled == "True" %} <!-- Hat der Administrator Bilder erlaubt? -->
                         <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                        {% elif settings.upload_enabled == "False" %}
+                        <input type="file" class="form-control" id="image" name="image" accept="image/*" disabled>
+                        <small class="text-muted d-block mt-2">
+                            <i class="bi bi-info-circle"></i>
+                            Bilder-Uploads sind deaktiviert.
+                        </small>
+                        {% endif %}
                     </div>
 
                     <hr>
                     <h6>Extra-Informationen</h6>
-                    <div id="specs-container">
-                        <div class="row mb-2 spec-row">
-                            <div class="col-5"><input type="text" name="spec_key[]" class="form-control" placeholder="Eigenschaft (z.B. Farbe)"></div>
-                            <div class="col-5"><input type="text" name="spec_value[]" class="form-control" placeholder="Wert (z.B. Blau)"></div>
-                            <div class="col-2">
-                                <button type="button" class="btn btn-outline-danger w-100" title="Zeile entfernen" aria-label="Entfernen" onclick="this.parentElement.parentElement.remove()">
-                                    <i class="bi bi-trash"></i>
-                                </button>
+
+                    <fieldset {% if settings.json_details == "False" %}disabled{% endif %}>
+
+                        <div id="specs-container">
+                            <div class="row mb-2 spec-row">
+                                <div class="col-5"><input type="text" name="spec_key[]" class="form-control" placeholder="Eigenschaft (z.B. Farbe)"></div>
+                                <div class="col-5"><input type="text" name="spec_value[]" class="form-control" placeholder="Wert (z.B. Blau)"></div>
+                                <div class="col-2">
+                                    <button type="button" class="btn btn-outline-danger w-100" title="Zeile entfernen" aria-label="Entfernen" onclick="this.parentElement.parentElement.remove()">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                    <button type="button" class="btn btn-sm btn-secondary mb-3" onclick="addSpecRow()">
-                        <i class="bi bi-plus-circle"></i> Weiteres Detail
-                    </button>
+                        <button type="button" class="btn btn-sm btn-secondary mb-3" onclick="addSpecRow()">
+                            <i class="bi bi-plus-circle"></i> Weiteres Detail
+                        </button>
+
+                        {% if settings.json_details == "False"%}
+                        <small class="text-muted d-block mt-2">
+                            <i class="bi bi-info-circle"></i> Details sind deaktiviert.
+                        </small>
+                        {% endif %}
+
+                    </fieldset>
+
                     <div class="mt-4">
                         <button type="submit" class="btn btn-success">Speichern</button>
                         <a href="/" class="btn btn-link">Abbrechen</a>

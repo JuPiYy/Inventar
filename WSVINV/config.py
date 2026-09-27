@@ -20,7 +20,11 @@ class Settings():
     
     class App:
         def __init__(self):
+            self.admin_enabled = os.getenv("ADMIN_ENABLED", "False")
+            self.xlsx_export = os.getenv("XLSX_EXPORT_ENABLED", "False")
+            self.upload_enabled = os.getenv("UPLOAD_ENABLED", "False")
             self.upload_folder = os.getenv("UPLOAD_FOLDER", "static/uploads")
+            self.json_details = os.getenv("JSON_ENABLED", "False")
             
     def __init__(self):
         self.server = self.Server()
