@@ -37,14 +37,27 @@
                 <div class="card shadow-sm mb-4">
                     <div class="card-header bg-dark text-white">Status</div>
                     <div class="card-body">
-                        <form method="POST" class="d-flex mb-3">
+                        <form method="POST" class="mb-3">
                             <input type="hidden" name="target" value="status">
-                            <input type="text" name="name" class="form-control form-control-sm me-2" placeholder="Neu..." required>
-                            <button class="btn btn-sm btn-success"><i class="bi bi-plus"></i></button>
+                            <div class="input-group input-group-sm mb-2">
+                                <input type="text" name="name" class="form-control" placeholder="Neu..." required>
+                                <select name="color_class" class="form-select form-select-sm">
+                                    <option value="secondary">Grau</option>
+                                    <option value="success">Grün</option>
+                                    <option value="danger">Rot</option>
+                                    <option value="warning">Gelb</option>
+                                    <option value="info">Blau</option>
+                                    <option value="primary">Dunkelblau</option>
+                                </select>
+                                <button class="btn btn-sm btn-success"><i class="bi bi-plus"></i></button>
+                            </div>
                         </form>
                         <ul class="list-group list-group-flush small">
                             {% for s in statuses %}
-                            <li class="list-group-item d-flex justify-content-between">{{ s.name }} <span class="badge bg-light text-dark">ID: {{ s.id }}</span></li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                {{ s.name }}
+                                <span class="badge bg-{{ s.color_class }}">{{ s.color_class }}</span>
+                            </li>
                             {% endfor %}
                         </ul>
                     </div>

@@ -194,9 +194,6 @@ def register_routes(app):
             settings=settings.app
         )
 
-
-
-
     @app.route('/admin', methods=['GET', 'POST'])
     def admin_panel():
         if request.method == 'POST':
@@ -207,7 +204,8 @@ def register_routes(app):
                 if target == 'category':
                     db.session.add(Category(name=name))
                 elif target == 'status':
-                    db.session.add(Status(name=name))
+                    color = request.form.get('color_class', 'secondary')
+                    db.session.add(Status(name=name, color_class=color))
                 elif target == 'location':  # NEU: Standort speichern
                     db.session.add(Location(name=name))
                 elif target == 'maint_type':
