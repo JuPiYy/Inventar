@@ -307,6 +307,36 @@ def register_routes(app):
         else:
             item.PurchaseDate = None
 
+        # --- NEUER CODE: Bildupload verarbeiten ---
+        if settings.app.upload_enabled and settings.app.upload_enabled.lower() == 'true':
+            if 'image' in request.files:
+                file = request.files['image']
+                
+                if file and file.filename != '':
+                    # Dateiendung validieren
+                    ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+                    ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+                    
+                    if ext in ALLOWED_EXTENSIONS:
+                        # Altes Bild löschen
+                        if item.ImageFile:
+                            old_path = os.path.join(app.config['UPLOAD_FOLDER'], item.ImageFile)
+                            if os.path.exists(old_path):
+                                try:
+                                    os.remove(old_path)
+                                except Exception as e:
+                                    app.logger.warning(f"Konnte altes Bild nicht löschen: {e}")
+                        
+                        # Neuen Dateinamen generieren
+                        safe_model = item.ModelName.replace(" ", "_") if item.ModelName else "item"
+                        new_filename = f"{item.AssetTag}_{safe_model}.{ext}"
+                        
+                        try:
+                            file.save(os.path.join(app.config['UPLOAD_FOLDER'], new_filename))
+                            item.ImageFile = new_filename
+                        except Exception as e:
+                            app.logger.error(f"Fehler beim Bildupload: {e}")
+
         try:
             db.session.commit()
         except Exception as e:
