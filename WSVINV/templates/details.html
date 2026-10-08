@@ -265,7 +265,7 @@
 
             <div class="modal fade" id="editItemModal" tabindex="-1" aria-hidden="true">
                 <div class="modal-dialog modal-lg">
-                    <form action="{{ url_for('edit_item', item_id=item.EquipmentID) }}" method="POST" class="modal-content">
+                    <form action="{{ url_for('edit_item', item_id=item.EquipmentID) }}" method="POST" class="modal-content" enctype="multipart/form-data">
                         <div class="modal-header bg-primary text-white">
                             <h5 class="modal-title">Gegenstand bearbeiten</h5>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -347,6 +347,29 @@
                                     <textarea name="Notes" class="form-control" rows="3">{{ item.Notes if item else '' }}</textarea>
                                 </div>
                             </div>
+
+                            <hr>
+
+                            {% if settings.upload_enabled|lower == 'true' %}
+                            <div class="mb-3">
+                                <label for="edit_image" class="form-label"><i class="bi bi-image"></i> Gegenstand-Foto</label>
+                                <input type="file" class="form-control" id="edit_image" name="image" accept="image/*">
+                                <small class="text-muted d-block mt-2">
+                                    {% if item.ImageFile %}
+                                    Aktuelles Foto: <strong>{{ item.ImageFile }}</strong><br>
+                                    {% endif %}
+                                    Newtypes: PNG, JPG, GIF, WebP
+                                </small>
+                            </div>
+                            {% else %}
+                            <div class="mb-3">
+                                <label for="edit_image" class="form-label"><i class="bi bi-image"></i> Gegenstand-Foto</label>
+                                <input type="file" class="form-control" id="edit_image" name="image" accept="image/*" disabled>
+                                <small class="text-muted d-block mt-2">
+                                    <i class="bi bi-info-circle"></i> Bilder-Uploads sind deaktiviert.
+                                </small>
+                            </div>
+                            {% endif %}
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Abbrechen</button>
