@@ -18,6 +18,11 @@
                    href="{{ url_for('export_docx', item_id=item.EquipmentID) }}">
                     <i class="bi bi-file-earmark-word"></i> Export
                 </a>
+            {% else %}
+                <button class="btn btn-secondary" type="button" disabled
+                        aria-disabled="true" title="DOCX-Export ist deaktiviert">
+                    <i class="bi bi-file-earmark-word"></i> Export
+                </button>
             {% endif %}
         </div>
 
