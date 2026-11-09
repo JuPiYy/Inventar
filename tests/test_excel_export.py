@@ -2,11 +2,34 @@ import json
 import random
 from datetime import date, datetime
 from decimal import Decimal
+from io import BytesIO
 from types import SimpleNamespace
 
 from openpyxl import load_workbook
+import pytest
+from flask import Flask
 
+from WSVINV.database import Equipment, db
 from WSVINV.excel_export import build_export_data, render_xlsx
+from WSVINV.routes import register_routes
+
+
+@pytest.fixture
+def export_client(tmp_path):
+    app = Flask(__name__)
+    app.config.update(
+        TESTING=True, SQLALCHEMY_DATABASE_URI="sqlite:///:memory:",
+        SQLALCHEMY_TRACK_MODIFICATIONS=False, UPLOAD_FOLDER=str(tmp_path),
+    )
+    db.init_app(app)
+    register_routes(app)
+    with app.app_context():
+        db.create_all()
+        db.session.add(Equipment(EquipmentID=1, AssetTag="TEST-001", Specs="{}"))
+        db.session.commit()
+        yield app.test_client()
+        db.session.remove()
+        db.drop_all()
 
 
 def equipment(equipment_id, specs, image="photo.png"):
@@ -91,6 +114,17 @@ def test_empty_data_has_headers_and_no_data_rows():
         assert sheet.max_row == 1
         assert sheet.freeze_panes == "A2"
         assert not sheet.tables
+
+
+def test_export_route_keeps_download_contract(export_client):
+    response = export_client.get("/export/excel")
+    assert response.status_code == 200
+    assert response.mimetype == (
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+    assert response.headers["Content-Disposition"].endswith(".xlsx")
+    workbook = load_workbook(BytesIO(response.data))
+    assert "Equipment" in workbook.sheetnames
 
 
 def test_deterministic_fuzz_payloads_are_flat_and_bounded():
