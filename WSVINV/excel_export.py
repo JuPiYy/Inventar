@@ -13,16 +13,27 @@ from openpyxl.utils import get_column_letter
 
 EXPORT_VERSION = "2.0"
 
-EQUIPMENT_HEADERS = [
+EQUIPMENT_FIELDS = [
     "EquipmentID", "AssetTag", "CategoryID", "Kategorie", "ModelName",
     "PurchaseDate", "StatusID", "Status", "LocationID", "Standort",
     "PurchasePrice", "CurrentValue", "WarrantyMonths", "Quantity", "Vendor",
     "ImageFile", "SpecsJSON", "Notes",
 ]
-SPECS_HEADERS = ["EquipmentID", "Key", "Value", "ValueType"]
-MAINTENANCE_HEADERS = [
+EQUIPMENT_HEADERS = [
+    "Geräte-ID", "Inventarnummer", "Kategorie-ID", "Kategorie", "Modellname",
+    "Anschaffungsdatum", "Status-ID", "Status", "Standort-ID", "Standort",
+    "Anschaffungspreis", "Aktueller Wert", "Garantie in Monaten", "Menge",
+    "Lieferant", "Bilddatei", "Spezifikationen (JSON)", "Bemerkungen",
+]
+SPECS_FIELDS = ["EquipmentID", "Key", "Value", "ValueType"]
+SPECS_HEADERS = ["Geräte-ID", "Eigenschaft", "Wert", "Datentyp"]
+MAINTENANCE_FIELDS = [
     "LogID", "EquipmentID", "LogDate", "TypeID", "MaintenanceType",
     "Description", "Costs", "PerformedBy",
+]
+MAINTENANCE_HEADERS = [
+    "Wartungsprotokoll-ID", "Geräte-ID", "Wartungsdatum", "Wartungstyp-ID",
+    "Wartungstyp", "Beschreibung", "Kosten", "Durchgeführt von",
 ]
 OVERVIEW_HEADERS = ["Kennzahl", "Wert"]
 INFO_HEADERS = ["Eigenschaft", "Wert"]
@@ -150,15 +161,24 @@ def _write_sheet(workbook, title, headers, rows):
         sheet.add_table(table)
     for column in sheet.columns:
         values = [str(cell.value) if cell.value is not None else "" for cell in column]
-        sheet.column_dimensions[get_column_letter(column[0].column)].width = min(
-            max(len(value) for value in values) + 2, 60
-        )
+        content_width = max(len(value.split("\n")[0]) for value in values)
+        minimum_width = max(14, min(len(str(column[0].value)) + 4, 28))
+        width = min(max(content_width + 3, minimum_width), 80)
+        sheet.column_dimensions[get_column_letter(column[0].column)].width = width
     for row in sheet.iter_rows(min_row=2):
         for cell in row:
             if cell.is_date:
                 cell.number_format = "yyyy-mm-dd hh:mm"
             elif isinstance(cell.value, (float, Decimal)):
                 cell.number_format = '#,##0.00'
+            if isinstance(cell.value, str) and len(cell.value) > 40:
+                alignment = copy(cell.alignment)
+                alignment.wrap_text = True
+                alignment.vertical = "top"
+                cell.alignment = alignment
+                cell.parent.row_dimensions[cell.row].height = max(
+                    cell.parent.row_dimensions[cell.row].height or 15, 30
+                )
     return sheet
 
 

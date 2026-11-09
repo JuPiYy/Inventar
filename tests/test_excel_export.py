@@ -65,6 +65,12 @@ def test_xlsx_structure_and_values():
         "Equipment", "Spezifikationen", "Wartungen", "Übersicht", "Export-Info"
     ]
     equipment_sheet = workbook["Equipment"]
+    assert [cell.value for cell in equipment_sheet[1]] == [
+        "Geräte-ID", "Inventarnummer", "Kategorie-ID", "Kategorie", "Modellname",
+        "Anschaffungsdatum", "Status-ID", "Status", "Standort-ID", "Standort",
+        "Anschaffungspreis", "Aktueller Wert", "Garantie in Monaten", "Menge",
+        "Lieferant", "Bilddatei", "Spezifikationen (JSON)", "Bemerkungen",
+    ]
     assert equipment_sheet.max_row == 2
     assert equipment_sheet["A2"].value == 1
     assert equipment_sheet["L2"].value == Decimal("80.25")
@@ -73,13 +79,22 @@ def test_xlsx_structure_and_values():
     assert equipment_sheet.freeze_panes == "A2"
     assert equipment_sheet.auto_filter.ref == "A1:R2"
     assert len(equipment_sheet.tables) == 1
+    assert equipment_sheet.column_dimensions["A"].width >= 14
+    assert equipment_sheet.column_dimensions["Q"].width >= 24
 
     specs_sheet = workbook["Spezifikationen"]
+    assert [cell.value for cell in specs_sheet[1]] == [
+        "Geräte-ID", "Eigenschaft", "Wert", "Datentyp"
+    ]
     assert specs_sheet.max_row == 4
     assert {(row[1].value, row[3].value) for row in specs_sheet.iter_rows(min_row=2)} == {
         ("Farbe", "string"), ("Anzahl", "number"), ("Aktiv", "boolean")
     }
     maintenance_sheet = workbook["Wartungen"]
+    assert [cell.value for cell in maintenance_sheet[1]] == [
+        "Wartungsprotokoll-ID", "Geräte-ID", "Wartungsdatum", "Wartungstyp-ID",
+        "Wartungstyp", "Beschreibung", "Kosten", "Durchgeführt von",
+    ]
     assert maintenance_sheet.max_row == 2
     assert maintenance_sheet["B2"].value == 1
     assert maintenance_sheet["C2"].value == datetime(2025, 2, 3, 4, 5)
@@ -144,3 +159,14 @@ def test_deterministic_fuzz_payloads_are_flat_and_bounded():
     data = build_export_data([equipment(1, nested_specs)], [])
     assert data["specs"][0][2] == '{"x":1}'
     assert data["specs"][0][3] == "string"
+
+
+def test_long_values_use_wrapping_and_bounded_widths():
+    long_text = "Sehr langer Beschreibungstext " * 20
+    item = equipment(1, json.dumps({"Beschreibung": long_text}), image="x" * 200)
+    item.Notes = long_text
+    workbook = load_workbook(render_xlsx(build_export_data([item], [])))
+    sheet = workbook["Equipment"]
+    assert 14 <= sheet.column_dimensions["R"].width <= 80
+    assert sheet["R2"].alignment.wrap_text is True
+    assert sheet["P2"].alignment.wrap_text is True
