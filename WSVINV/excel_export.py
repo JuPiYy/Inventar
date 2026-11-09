@@ -153,6 +153,12 @@ def _write_sheet(workbook, title, headers, rows):
         sheet.column_dimensions[get_column_letter(column[0].column)].width = min(
             max(len(value) for value in values) + 2, 60
         )
+    for row in sheet.iter_rows(min_row=2):
+        for cell in row:
+            if cell.is_date:
+                cell.number_format = "yyyy-mm-dd hh:mm"
+            elif isinstance(cell.value, (float, Decimal)):
+                cell.number_format = '#,##0.00'
     return sheet
 
 
