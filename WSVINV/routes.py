@@ -7,6 +7,7 @@ from WSVINV.config import settings
 from WSVINV.database import Category, Status, MaintenanceTypes, Equipment, MaintenanceLog, Location
 from WSVINV.database import db
 from WSVINV.excel_export import build_export_data, render_xlsx
+from WSVINV.docx_export import build_docx
 
 from flask import jsonify, render_template, request, redirect, url_for, send_file
 from datetime import datetime, timedelta
@@ -158,6 +159,32 @@ def register_routes(app):
                                locations=all_locations,
                                settings=settings.app
                                )
+
+    @app.route('/equipment/<int:item_id>/export/docx')
+    def export_docx(item_id):
+        item = Equipment.query.get_or_404(item_id)
+        logs = MaintenanceLog.query.filter_by(EquipmentID=item_id)\
+            .order_by(MaintenanceLog.LogDate.desc(), MaintenanceLog.LogID.desc()).all()
+
+        image_path = None
+        image_name = getattr(item, 'ImageFile', None)
+        if image_name:
+            # Only resolve a file name inside the configured upload directory.
+            safe_image_name = os.path.basename(image_name)
+            candidate = os.path.join(app.config['UPLOAD_FOLDER'], safe_image_name)
+            if os.path.isfile(candidate):
+                image_path = candidate
+
+        output = build_docx(item, logs, image_path=image_path)
+        safe_asset = secure_filename(str(item.AssetTag or f"equipment-{item_id}"))
+        if not safe_asset:
+            safe_asset = f"equipment-{item_id}"
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            as_attachment=True,
+            download_name=f'{safe_asset}.docx',
+        )
 
     @app.route('/equipment/add', methods=['GET', 'POST'])
     def add_equipment():

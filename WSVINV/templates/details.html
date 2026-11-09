@@ -11,7 +11,13 @@
 </head>
 <body class="bg-light">
     <div class="container mt-5">
-        <a href="/" class="btn btn-outline-secondary mb-4">← Zurück zur Übersicht</a>
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
+            <a href="/" class="btn btn-outline-secondary">← Zurück zur Übersicht</a>
+            <a class="btn btn-info text-white"
+               href="{{ url_for('export_docx', item_id=item.EquipmentID) }}">
+                <i class="bi bi-file-earmark-word"></i> Export
+            </a>
+        </div>
 
         <div class="row">
             <div class="col-md-6">
@@ -35,9 +41,11 @@
                 <div class="card shadow-sm mb-4">
                     <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">Stammdaten & Spezifikationen</h5>
-                        <button class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#editItemModal">
-                            <i class="bi bi-pencil"></i> Bearbeiten
-                        </button>
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-sm btn-light" data-bs-toggle="modal" data-bs-target="#editItemModal">
+                                <i class="bi bi-pencil"></i> Bearbeiten
+                            </button>
+                        </div>
                     </div>
                     <div class="card-body">
                         <table class="table table-sm">
