@@ -1,12 +1,14 @@
 import base64
 import json
 import random
+from pathlib import Path
 from datetime import date, datetime
 from decimal import Decimal
 from io import BytesIO
 from types import SimpleNamespace
 
 from docx import Document
+import docx
 import pytest
 from flask import Flask
 
@@ -27,6 +29,11 @@ PNG = base64.b64decode(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk"
     "+A8AAQUBAScY42YAAAAASUVORK5CYII="
 )
+
+
+def test_python_docx_dependency_is_not_legacy_docx_module():
+    assert tuple(int(part) for part in docx.__version__.split(".")[:2]) >= (1, 2)
+    assert Path(docx.__file__).name == "__init__.py"
 
 
 @pytest.fixture
