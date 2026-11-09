@@ -3,6 +3,7 @@
 from datetime import datetime
 from decimal import Decimal
 import json
+from copy import copy
 from io import BytesIO
 
 from openpyxl import Workbook
@@ -178,7 +179,9 @@ def render_xlsx(data):
     overview.column_dimensions["B"].width = 28
     for sheet in workbook.worksheets:
         for cell in sheet[1]:
-            cell.font = cell.font.copy(bold=True)
+            font = copy(cell.font)
+            font.bold = True
+            cell.font = font
     output = BytesIO()
     workbook.save(output)
     output.seek(0)
