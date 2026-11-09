@@ -7,7 +7,7 @@ from WSVINV.config import settings
 from WSVINV.database import Category, Status, MaintenanceTypes, Equipment, MaintenanceLog, Location
 from WSVINV.database import db
 
-from flask import render_template, request, redirect, url_for, send_file
+from flask import jsonify, render_template, request, redirect, url_for, send_file
 from datetime import datetime, timedelta
 
 from werkzeug.utils import secure_filename
@@ -17,6 +17,46 @@ from io import BytesIO
 import json
 import pandas as pd
 import os
+
+
+def _validate_specs(specs):
+    if not isinstance(specs, dict):
+        return None, "JSON-Details müssen als Objekt angegeben werden."
+
+    normalized_specs = {}
+    for key, value in specs.items():
+        normalized_key = str(key).strip()
+        if not normalized_key:
+            return None, "JSON-Details dürfen keinen leeren Schlüssel enthalten."
+        if isinstance(value, (dict, list)):
+            return None, "JSON-Details dürfen nur flache Schlüssel/Wert-Paare enthalten."
+        if normalized_key in normalized_specs:
+            return None, f"Der Schlüssel '{normalized_key}' ist doppelt vorhanden."
+        normalized_specs[normalized_key] = value
+
+    return normalized_specs, None
+
+
+def _specs_from_form(request):
+    spec_keys = request.form.getlist('spec_key[]')
+    spec_values = request.form.getlist('spec_value[]')
+
+    if len(spec_keys) != len(spec_values):
+        return None, "Ungültige JSON-Details: Schlüssel und Werte müssen paarweise angegeben werden."
+
+    specs = {}
+    for key, value in zip(spec_keys, spec_values):
+        normalized_key = key.strip()
+        if not normalized_key:
+            if value.strip():
+                return None, "Ungültige JSON-Details: Ein Wert darf keinen leeren Schlüssel haben."
+            continue
+        if normalized_key in specs:
+            return None, f"Ungültige JSON-Details: Der Schlüssel '{normalized_key}' ist doppelt vorhanden."
+        specs[normalized_key] = value
+
+    return _validate_specs(specs)
+
 
 def register_routes(app):
     @app.route('/')
@@ -163,12 +203,10 @@ def register_routes(app):
             )
 
             # 4. Dynamische JSON-Specs verarbeiten
-            keys = request.form.getlist('spec_key[]')
-            values = request.form.getlist('spec_value[]')
-        
-            # Dictionary erstellen und leere Keys filtern
-            specs_dict = {k: v for k, v in zip(keys, values) if k.strip()}
-            new_item.Specs = json.dumps(specs_dict)
+            specs_dict, specs_error = _specs_from_form(request)
+            if specs_error:
+                return specs_error, 400
+            new_item.Specs = json.dumps(specs_dict, ensure_ascii=False)
 
             # 5. In die Datenbank schreiben
             try:
@@ -193,6 +231,30 @@ def register_routes(app):
             locations=locations,
             settings=settings.app
         )
+
+    @app.route('/api/equipment/<int:item_id>/specs', methods=['PUT'])
+    def update_equipment_specs(item_id):
+        if settings.app.json_details.lower() != 'true':
+            return jsonify({'error': 'JSON-Details sind deaktiviert.'}), 403
+
+        item = Equipment.query.get_or_404(item_id)
+        payload = request.get_json(silent=True)
+        specs, error = _validate_specs(payload)
+        if error:
+            return jsonify({'error': error}), 400
+
+        item.Specs = json.dumps(specs, ensure_ascii=False)
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(f"Fehler beim Speichern der JSON-Details: {e}")
+            return jsonify({'error': 'Fehler beim Speichern der JSON-Details.'}), 500
+
+        return jsonify({
+            'equipment_id': item.EquipmentID,
+            'specs': specs
+        })
 
     @app.route('/admin', methods=['GET', 'POST'])
     def admin_panel():
@@ -283,6 +345,13 @@ def register_routes(app):
     @app.route('/equipment/<int:item_id>/edit', methods=['POST'])
     def edit_item(item_id):
         item = Equipment.query.get_or_404(item_id)
+
+        specs_json = None
+        if settings.app.json_details.lower() == 'true':
+            specs, error = _specs_from_form(request)
+            if error:
+                return error, 400
+            specs_json = json.dumps(specs, ensure_ascii=False)
     
         # Grunddaten
         item.ModelName = request.form.get('ModelName')
@@ -299,6 +368,8 @@ def register_routes(app):
         item.WarrantyMonths = int(request.form.get('WarrantyMonths') or 0)
 
         item.Quantity = int(request.form.get('Quantity') or 1)
+        if specs_json is not None:
+            item.Specs = specs_json
     
         # Datum handling
         p_date = request.form.get('PurchaseDate')

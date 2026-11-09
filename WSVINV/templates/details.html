@@ -349,6 +349,59 @@
                             </div>
 
                             <hr>
+                            <h6>Extra-Informationen</h6>
+                            <fieldset {% if settings.json_details|lower != 'true' %}disabled{% endif %}>
+                                <div id="edit-specs-container">
+                                    {% for key, value in specs.items() %}
+                                    <div class="row mb-2 spec-row">
+                                        <div class="col-5">
+                                            <input type="text" name="spec_key[]" class="form-control"
+                                                   value="{{ key }}" placeholder="Eigenschaft (z.B. Farbe)">
+                                        </div>
+                                        <div class="col-5">
+                                            <input type="text" name="spec_value[]" class="form-control"
+                                                   value="{{ value }}" placeholder="Wert (z.B. Blau)">
+                                        </div>
+                                        <div class="col-2">
+                                            <button type="button" class="btn btn-outline-danger w-100"
+                                                    title="Zeile entfernen" aria-label="Entfernen"
+                                                    onclick="this.parentElement.parentElement.remove()">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {% else %}
+                                    <div class="row mb-2 spec-row">
+                                        <div class="col-5">
+                                            <input type="text" name="spec_key[]" class="form-control"
+                                                   placeholder="Eigenschaft (z.B. Farbe)">
+                                        </div>
+                                        <div class="col-5">
+                                            <input type="text" name="spec_value[]" class="form-control"
+                                                   placeholder="Wert (z.B. Blau)">
+                                        </div>
+                                        <div class="col-2">
+                                            <button type="button" class="btn btn-outline-danger w-100"
+                                                    title="Zeile entfernen" aria-label="Entfernen"
+                                                    onclick="this.parentElement.parentElement.remove()">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                                <button type="button" class="btn btn-sm btn-secondary mb-3"
+                                        onclick="addEditSpecRow()">
+                                    <i class="bi bi-plus-circle"></i> Weiteres Detail
+                                </button>
+                                {% if settings.json_details|lower != 'true' %}
+                                <small class="text-muted d-block mt-2">
+                                    <i class="bi bi-info-circle"></i> Details sind deaktiviert.
+                                </small>
+                                {% endif %}
+                            </fieldset>
+
+                            <hr>
 
                             {% if settings.upload_enabled|lower == 'true' %}
                             <div class="mb-3">
@@ -380,5 +433,30 @@
             </div>
         </div>
     </div>
+    <script>
+        function addEditSpecRow() {
+            const container = document.getElementById('edit-specs-container');
+            const row = document.createElement('div');
+            row.className = 'row mb-2 spec-row';
+            row.innerHTML = `
+                <div class="col-5">
+                    <input type="text" name="spec_key[]" class="form-control"
+                           placeholder="Eigenschaft (z.B. Farbe)">
+                </div>
+                <div class="col-5">
+                    <input type="text" name="spec_value[]" class="form-control"
+                           placeholder="Wert (z.B. Blau)">
+                </div>
+                <div class="col-2">
+                    <button type="button" class="btn btn-outline-danger w-100"
+                            title="Zeile entfernen" aria-label="Entfernen"
+                            onclick="this.parentElement.parentElement.remove()">
+                        <i class="bi bi-trash"></i>
+                    </button>
+                </div>
+            `;
+            container.appendChild(row);
+        }
+    </script>
 </body>
 </html>
