@@ -11,6 +11,9 @@ from docx import Document
 from docx.enum.section import WD_SECTION
 from docx.enum.table import WD_CELL_VERTICAL_ALIGNMENT
 from docx.enum.text import WD_ALIGN_PARAGRAPH
+from docx.image.exceptions import UnrecognizedImageError
+from docx.oxml import OxmlElement
+from docx.oxml.ns import qn
 from docx.shared import Cm, Inches, Pt, RGBColor
 
 
@@ -66,11 +69,9 @@ def _set_cell(cell, text, *, header=False):
             if header:
                 run.font.color.rgb = RGBColor(255, 255, 255)
     if header:
-        shading = cell._tc.get_or_add_tcPr().add_new("w:shd")
-        shading.set(
-            "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}fill",
-            "1F4E79",
-        )
+        shading = OxmlElement("w:shd")
+        shading.set(qn("w:fill"), "1F4E79")
+        cell._tc.get_or_add_tcPr().append(shading)
 
 
 def _table(document, headers, rows):
@@ -112,8 +113,8 @@ def build_docx(item, maintenance_logs: Iterable, image_path=None):
         try:
             paragraph = document.add_paragraph()
             paragraph.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            paragraph.add_run().add_picture(image_path, width=Inches(4.8))
-        except (OSError, ValueError, TypeError):
+            paragraph.add_run().add_picture(str(image_path), width=Inches(4.8))
+        except (OSError, ValueError, TypeError, AttributeError, UnrecognizedImageError):
             pass
 
     document.add_heading("Gegenstandsdaten", level=1)
