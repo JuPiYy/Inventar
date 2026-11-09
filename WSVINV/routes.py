@@ -162,6 +162,9 @@ def register_routes(app):
 
     @app.route('/equipment/<int:item_id>/export/docx')
     def export_docx(item_id):
+        if settings.app.docx_export.lower() != 'true':
+            return jsonify({'error': 'DOCX-Export ist deaktiviert.'}), 403
+
         item = Equipment.query.get_or_404(item_id)
         logs = MaintenanceLog.query.filter_by(EquipmentID=item_id)\
             .order_by(MaintenanceLog.LogDate.desc(), MaintenanceLog.LogID.desc()).all()

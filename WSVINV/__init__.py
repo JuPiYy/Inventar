@@ -42,6 +42,7 @@ app.logger.info(f"Database URI: {app.config['SQLALCHEMY_DATABASE_URI']}")
 app.logger.info(f"Das hochladen von Bildern ist " + ("aktiviert" if settings.app.upload_enabled == "True" else "deaktiviert") + ".")
 app.logger.info(f"Das hinzufügen von JSON-Daten ist " + ("aktiviert" if settings.app.json_details == "True" else "deaktiviert" + "."))
 app.logger.info(f"Das Exportieren von XLSX-Dateien ist " + ("aktiviert" if settings.app.xlsx_export == "True" else "deaktiviert") + ".")
+app.logger.info(f"Das Exportieren von DOCX-Dateien ist " + ("aktiviert" if settings.app.docx_export == "True" else "deaktiviert") + ".")
 
 app.logger.info(f"Der Administrator-Bereich ist " + ("aktiviert" if settings.app.admin_enabled == "True" else "deaktiviert.  Bitte aktivieren Sie ihn in der .env-Datei um Änderungen vorzunehmen."))
 

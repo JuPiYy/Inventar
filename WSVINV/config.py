@@ -24,6 +24,8 @@ class Settings():
         def __init__(self):
             self.admin_enabled = os.getenv("ADMIN_ENABLED", "False")
             self.xlsx_export = os.getenv("XLSX_EXPORT_ENABLED", "False")
+            # DOCX export is opt-in, matching the existing export feature flags.
+            self.docx_export = os.getenv("DOCX_EXPORT_ENABLED", "False")
             self.upload_enabled = os.getenv("UPLOAD_ENABLED", "False")
             self.upload_folder = os.getenv("UPLOAD_FOLDER", "static/uploads")
             self.json_details = os.getenv("JSON_ENABLED", "False")

@@ -23,6 +23,7 @@ from WSVINV.database import (
 )
 from WSVINV.docx_export import build_docx
 from WSVINV.routes import register_routes
+from WSVINV.config import settings
 
 
 PNG = base64.b64decode(
@@ -116,7 +117,8 @@ def test_docx_contains_data_tables_and_embedded_image(tmp_path):
     assert len(document.inline_shapes) == 1
 
 
-def test_route_download_headers_filename_and_missing_image(docx_client):
+def test_route_download_headers_filename_and_missing_image(docx_client, monkeypatch):
+    monkeypatch.setattr(settings.app, "docx_export", "True")
     client, upload_folder = docx_client
     item = Equipment(
         EquipmentID=1, AssetTag="BOOT/Ä-001", ModelName="Touryak",
@@ -134,6 +136,16 @@ def test_route_download_headers_filename_and_missing_image(docx_client):
     Document(BytesIO(response.data))
     assert not list(upload_folder.iterdir())
     assert client.get("/equipment/999/export/docx").status_code == 404
+
+
+def test_route_rejects_disabled_export_before_item_lookup(docx_client, monkeypatch):
+    client, _ = docx_client
+    monkeypatch.setattr(settings.app, "docx_export", "False")
+
+    response = client.get("/equipment/999/export/docx")
+
+    assert response.status_code == 403
+    assert response.json == {"error": "DOCX-Export ist deaktiviert."}
 
 
 def test_empty_values_and_empty_log_are_explained():

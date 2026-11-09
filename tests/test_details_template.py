@@ -12,3 +12,4 @@ def test_details_has_shared_responsive_top_button_row():
     assert 'class="btn btn-info text-white"' in top_row
     assert "url_for('export_docx', item_id=item.EquipmentID)" in top_row
     assert top_row.count("Export") == 1
+    assert "{% if settings.docx_export.lower() == 'true' %}" in top_row
