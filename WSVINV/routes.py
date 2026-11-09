@@ -6,6 +6,7 @@ from WSVINV.config import settings
 
 from WSVINV.database import Category, Status, MaintenanceTypes, Equipment, MaintenanceLog, Location
 from WSVINV.database import db
+from WSVINV.excel_export import build_export_data, render_xlsx
 
 from flask import jsonify, render_template, request, redirect, url_for, send_file
 from datetime import datetime, timedelta
@@ -15,7 +16,6 @@ from werkzeug.utils import secure_filename
 from io import BytesIO
 
 import json
-import pandas as pd
 import os
 
 
@@ -431,37 +431,10 @@ def register_routes(app):
 
     @app.route('/export/excel')
     def export_excel():
-        # 1. Alle Daten aus der Datenbank abrufen
         items = Equipment.query.all()
-    
-        # 2. Daten für den Export vorbereiten (Listen von Dictionaries)
-        data = []
-        for item in items:
-            data.append({
-                'Asset Tag': item.AssetTag,
-                'Modellname': item.ModelName,
-                'Kategorie': item.category.name if item.category else '',
-                'Status': item.status.name if item.status else '',
-                'Standort': item.location.name if item.location else '',
-                'Anzahl': item.Quantity or 1,
-                'Händler': item.Vendor or '',
-                'Bemerkungen': item.Notes or '',
-                'Kaufdatum': item.PurchaseDate.strftime('%d.%m.%Y') if item.PurchaseDate else '',
-                'Kaufpreis [€]': item.PurchasePrice,
-                'Garantie [Monate]': item.WarrantyMonths
-            })
-    
-        # 3. DataFrame erstellen
-        df = pd.DataFrame(data)
-    
-        # 4. Datei im Speicher erstellen (nicht auf der Festplatte)
-        output = BytesIO()
-        with pd.ExcelWriter(output, engine='openpyxl') as writer:
-            df.to_excel(writer, index=False, sheet_name='Inventar')
-    
-        output.seek(0)
-    
-        # 5. Datei an den User senden
+        maintenance_logs = MaintenanceLog.query.order_by(MaintenanceLog.LogID).all()
+        export_data = build_export_data(items, maintenance_logs)
+        output = render_xlsx(export_data)
         timestamp = datetime.now().strftime('%Y-%m-%d_%H-%M')
         return send_file(
             output,
